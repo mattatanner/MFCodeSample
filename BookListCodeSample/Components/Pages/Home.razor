@@ -1,0 +1,73 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@inject DBConnector db
+
+<PageTitle>Book List</PageTitle>
+
+@if (!isLoggedIn)
+{
+    <div class="login-box">
+        <h3>Enter your name to continue</h3>
+        <input @bind="inputName" @bind:event="oninput" placeholder="Your name" @onkeydown="HandleKeyDown" />
+        <button @onclick="SetName">Enter</button>
+    </div>
+}
+else
+{
+    <h4 class="mb-3">Welcome, @userName!</h4>
+
+    <SmartCards TItem="Book"
+                Items="books"
+                CardType="typeof(Book)"
+                CardTitleProperty="bk_title"
+                SummaryItems="bk_author"
+                AuthorProperty="bk_author"
+                Favorites="favorites"
+                CurrentUserName="@userName"
+                IdProperty="bk_id"
+                OnFavoriteClick="HandleFavorite"
+                RefreshTrigger="@refreshCounter">
+    </SmartCards>
+}
+
+@code {
+    private string inputName = string.Empty;
+    private string userName = string.Empty;
+    private bool isLoggedIn = false;
+    private List<Book> books = new();
+    private List<Favorite> favorites = new();
+    private int refreshCounter = 0;
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SetName();
+        }
+    }
+
+    private async Task SetName()
+    {
+        if (!string.IsNullOrWhiteSpace(inputName))
+        {
+            userName = inputName.Trim();
+            isLoggedIn = true;
+            await LoadData();
+        }
+    }
+
+    private async Task LoadData()
+    {
+        books = await db.LoadData<Book>("SELECT * FROM Books");
+        favorites = await db.LoadData<Favorite>("SELECT * FROM Favorites");
+    }
+
+    private async Task HandleFavorite(int bookId)
+    {
+        await db.Execute(
+            $"INSERT INTO Favorites (fav_name, fav_bk_id) VALUES ({db.Quote(userName)}, {bookId})");
+
+        await LoadData();
+        refreshCounter++;
+    }
+}

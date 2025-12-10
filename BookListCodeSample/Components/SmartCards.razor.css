@@ -1,0 +1,237 @@
+﻿.smart-card-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    justify-content: center;
+    gap: 20px;
+    margin: 20px auto;
+    max-width: 1000px;
+    position: relative;
+    overflow: visible;
+    padding: 40px;
+}
+
+.card {
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    background: linear-gradient(to bottom, rgba(255,253,245,1) 0%, rgba(255,249,235,1) 100%);
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    background-image: url('/images/oldbooks.jpg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: transform 0.35s ease, box-shadow 0.35s ease, border 0.35s ease;
+    z-index: 1;
+    transform-origin: center center;
+    backface-visibility: hidden;
+    position: relative;
+}
+
+    .card:hover:not(.expanded):not(.collapsing) {
+        transform: scale(1.05);
+        border-color: #999;
+    }
+
+.card-header {
+    background: #4a4a4a;
+    padding: 8px;
+    text-align: center;
+    font-weight: bold;
+    border-bottom: 1px solid #333;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+    .card-header h4 {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        gap: 10px;
+        margin: 0;
+        width: 100%;
+        max-width: 100%;
+        color: white;
+    }
+
+.card-title-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 70%;
+    color: white;
+}
+
+.star-icon {
+    color: gold;
+}
+
+.favorite-badge {
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    color: white;
+}
+
+.card-body {
+    flex: 1;
+    padding: 10px;
+    font-size: 14px;
+    overflow-y: auto;
+}
+
+.author-text {
+    font-style: italic;
+    color: white;
+    text-align: center;
+    margin: 10px 0;
+    background: rgba(0,0,0,0.5);
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.btn-show-users {
+    display: block;
+    margin-top: 10px;
+    width: 100%;
+    font-size: 12px;
+}
+
+.card.expanded {
+    transform: scale(1.6);
+    border-color: #666;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    z-index: 10;
+    overflow: visible;
+    position: relative;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1 !important;
+}
+
+.card.collapsing {
+    transform: scale(1);
+    z-index: 10;
+    border-color: #ccc;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    overflow: visible !important;
+    position: relative;
+}
+
+.card.expanded.collapsing {
+    transform: scale(1) !important;
+    z-index: 10;
+    border-color: #ccc;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    overflow: visible !important;
+}
+
+.card.expanded,
+.card.collapsing {
+    z-index: 10;
+    position: relative;
+}
+
+    .card.expanded .card-body,
+    .card.collapsing .card-body {
+        overflow-y: auto;
+        overflow-x: visible;
+    }
+
+.smart-card-container.has-expanded .card:not(.expanded):not(.collapsing) {
+    filter: blur(2px);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.smart-card-container > * {
+    overflow: visible !important;
+}
+
+.card-wrapper {
+    position: relative;
+    overflow: visible !important;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+}
+
+/* Modal Styles */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 100;
+}
+
+.modal-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 101;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    min-width: 300px;
+    max-width: 400px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #ccc;
+}
+
+    .modal-header h5 {
+        margin: 0;
+        font-size: 16px;
+    }
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+}
+
+    .modal-close:hover {
+        color: #000;
+    }
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.user-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+    .user-list li {
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+        .user-list li:last-child {
+            border-bottom: none;
+        }

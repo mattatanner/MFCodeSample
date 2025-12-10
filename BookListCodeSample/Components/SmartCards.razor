@@ -1,0 +1,207 @@
+﻿@namespace BookListCodeSample.Components
+@typeparam TItem
+@inject IJSRuntime JS
+
+<div class="smart-card-container @(ExpandedItem != null ? "has-expanded" : "")">
+    @if (Items != null && Items.Any())
+    {
+        @foreach (var obj in Items)
+        {
+            var isExpanded = ReferenceEquals(ExpandedItem, obj);
+            var isCollapsing = ReferenceEquals(CollapsingItem, obj);
+            var itemId = GetItemId(obj);
+            var favCount = GetFavoriteCount(itemId);
+            var isFavorited = IsUserFavorited(itemId);
+
+            <div class="card @(isExpanded ? "expanded" : "") @(isCollapsing ? "collapsing" : "")"
+                 @onclick="EventCallback.Factory.Create(this, () => ToggleExpand(obj))">
+
+                <div class="card-header">
+                    <h4>
+                        <span class="card-title-text">@BuildCardTitle(obj)</span>
+                        @if (Favorites != null)
+                        {
+                            <span class="favorite-badge">
+                                <span class="star-icon">★</span> @favCount
+                            </span>
+                        }
+                    </h4>
+                </div>
+
+                <div class="card-body">
+                    @if (isExpanded)
+                    {
+                        <p class="author-text">By @GetAuthor(obj)</p>
+
+                        @if (Favorites != null)
+                        {
+                            <hr />
+                            <button class="btn @(isFavorited ? "btn-secondary" : "btn-warning")"
+                                    disabled="@isFavorited"
+                                    @onclick="() => OnFavoriteClick.InvokeAsync(itemId)"
+                                    @onclick:stopPropagation="true">
+                                @(isFavorited ? "★ Already Favorited" : "☆ Add to Favorites")
+                            </button>
+
+                            @if (favCount > 0)
+                            {
+                                <button class="btn btn-info btn-show-users"
+                                        @onclick="() => OpenModal(itemId, BuildCardTitle(obj))"
+                                        @onclick:stopPropagation="true">
+                                    Show who favorited
+                                </button>
+                            }
+                        }
+                    }
+                </div>
+            </div>
+        }
+    }
+    else if (ChildCards != null && ContextObject != null)
+    {
+        <CascadingValue Value="this">
+            @ChildCards
+        </CascadingValue>
+    }
+    else
+    {
+        <p><i>No items or context provided.</i></p>
+    }
+</div>
+
+@if (showModal)
+{
+    <div class="modal-backdrop" @onclick="CloseModal"></div>
+    <div class="modal-container">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>Users who favorited "@modalBookTitle"</h5>
+                <button class="modal-close" @onclick="CloseModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <ul class="user-list">
+                    @foreach (var user in GetUsersForBook(modalBookId))
+                    {
+                        <li>@user</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Type? CardType { get; set; }
+    [Parameter] public IEnumerable<TItem>? Items { get; set; }
+    [Parameter] public string? SummaryItems { get; set; }
+    [Parameter] public string? CardTitleProperty { get; set; }
+    [Parameter] public RenderFragment? ChildCards { get; set; }
+    [Parameter] public TItem? ContextObject { get; set; }
+    [Parameter] public List<Favorite>? Favorites { get; set; }
+    [Parameter] public string? CurrentUserName { get; set; }
+    [Parameter] public string IdProperty { get; set; } = "bk_id";
+    [Parameter] public string AuthorProperty { get; set; } = "bk_author";
+    [Parameter] public EventCallback<int> OnFavoriteClick { get; set; }
+    [Parameter] public int RefreshTrigger { get; set; }
+
+    private TItem? ExpandedItem { get; set; }
+    private TItem? CollapsingItem { get; set; }
+    private int lastRefreshTrigger = 0;
+
+    private bool showModal = false;
+    private string modalBookTitle = "";
+    private int modalBookId = 0;
+
+    protected override void OnParametersSet()
+    {
+        if (RefreshTrigger != lastRefreshTrigger)
+        {
+            ExpandedItem = default;
+            CollapsingItem = default;
+            lastRefreshTrigger = RefreshTrigger;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JS.InvokeVoidAsync("fitText");
+    }
+
+    private async Task ToggleExpand(TItem obj)
+    {
+        if (ReferenceEquals(ExpandedItem, obj))
+        {
+            ExpandedItem = default;
+        }
+        else
+        {
+            ExpandedItem = obj;
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void OpenModal(int bookId, string bookTitle)
+    {
+        modalBookId = bookId;
+        modalBookTitle = bookTitle;
+        showModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+    }
+
+    private List<string> GetUsersForBook(int bookId)
+    {
+        if (Favorites == null) return new();
+        return Favorites.Where(f => f.fav_bk_id == bookId).Select(f => f.fav_name).ToList();
+    }
+
+    private int GetItemId(object obj)
+    {
+        var prop = CardType?.GetProperty(IdProperty);
+        if (prop != null)
+        {
+            var val = prop.GetValue(obj);
+            if (val is int id) return id;
+        }
+        return 0;
+    }
+
+    private string GetAuthor(object obj)
+    {
+        var prop = CardType?.GetProperty(AuthorProperty);
+        if (prop != null)
+        {
+            return prop.GetValue(obj)?.ToString() ?? "";
+        }
+        return "";
+    }
+
+    private int GetFavoriteCount(int itemId)
+    {
+        if (Favorites == null) return 0;
+        return Favorites.Count(f => f.fav_bk_id == itemId);
+    }
+
+    private bool IsUserFavorited(int itemId)
+    {
+        if (Favorites == null || string.IsNullOrEmpty(CurrentUserName)) return false;
+        return Favorites.Any(f => f.fav_bk_id == itemId && f.fav_name == CurrentUserName);
+    }
+
+    private string BuildCardTitle(object obj)
+    {
+        if (CardType == null) return "Card";
+
+        if (!string.IsNullOrEmpty(CardTitleProperty))
+        {
+            var props = CardTitleProperty.Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var values = props.Select(p => CardType.GetProperty(p)?.GetValue(obj)?.ToString() ?? "");
+            return string.Join(" ", values.Where(v => !string.IsNullOrEmpty(v)));
+        }
+
+        return obj.GetType().Name;
+    }
+}
