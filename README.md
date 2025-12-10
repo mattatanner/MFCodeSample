@@ -12,7 +12,7 @@ git clone https://github.com/mattatanner/MFCodeSample.git
 
 
 Open the solution
-Open MFCodeSample.sln in Visual Studio.
+Open BookListCodeSample.sln in Visual Studio.
 
 Restore dependencies
 Visual Studio should automatically restore NuGet packages. If not, right-click the solution and select Restore NuGet Packages.
